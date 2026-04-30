@@ -26,17 +26,17 @@ df = session.laps[session.laps['Driver'].isin(drivers_abbrs)].copy()
 
 def format_time(df: pd.DataFrame) -> pd.Series:
     lap_time = pd.to_timedelta(df['LapTime'], errors='coerce')
-    components = lap_time.dt.components
-    minutes = components['minutes'].fillna(0).astype(int)
-    seconds = components['seconds'].fillna(0).astype(int)
-    milliseconds = (components['microseconds'].fillna(0) // 1000).astype(int)
+    minutes = lap_time.dt.components['minutes'].fillna(0).astype(int)
+    seconds = lap_time.dt.components['seconds'].fillna(0).astype(int)
+    total_seconds = lap_time.dt.total_seconds()
+    milliseconds = ((total_seconds % 1) * 1000).round(0).astype(int)
 
     formatted = (
-        minutes.astype(int).astype(str)
-        + ':'
-        + seconds.astype(int).astype(str).str.zfill(2)
-        + '.'
-        + milliseconds.astype(int).astype(str).str.zfill(3)
+        minutes.astype(str)
+        + ':' +
+        seconds.astype(str).str.zfill(2)
+        + '.' +
+        milliseconds.astype(str).str.zfill(3)
     )
     return formatted.where(lap_time.notna(), pd.NA)
 
@@ -44,8 +44,9 @@ def format_DataFrame(df) -> pd.DataFrame:
     if df.empty:
         print("No data available for the specified drivers.")
         return None
-    df = df[['Driver', 'LapNumber', 'LapTime']].copy()
+    df = df[['Driver', 'LapNumber', 'LapTime', "IsAccurate"]].copy()
     df['LapTime'] = format_time(df)
     return df
-
+    
+df= df[df['IsAccurate'] == True].pick_quicklaps()
 print(format_DataFrame(df))
