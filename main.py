@@ -22,7 +22,7 @@ while True:
         break
     drivers_abbrs.append(abbr.upper())
 
-df = session.laps[session.laps['Driver'].isin(drivers_abbrs)]
+df = session.laps[session.laps['Driver'].isin(drivers_abbrs)].copy()
 
 def format_time(df: pd.DataFrame) -> pd.Series:
     lap_time = pd.to_timedelta(df['LapTime'], errors='coerce')
@@ -43,16 +43,9 @@ def format_time(df: pd.DataFrame) -> pd.Series:
 def format_DataFrame(df) -> pd.DataFrame:
     if df.empty:
         print("No data available for the specified drivers.")
-        return df
-    df = df.drop(columns = ['Time', 'FastF1Generated', 'IsAccurate', 'Deleted', 'DeletedReason',
-                            'Stint','PitOutTime', 'PitInTime', 'Sector1Time', 'Sector2Time', 'Sector3Time',
-                            'Sector1SessionTime', 'Sector2SessionTime', 'Sector3SessionTime',
-                            'SpeedI1', 'SpeedI2', 'SpeedFL', 'SpeedST', 'IsPersonalBest',
-                            'FreshTyre', 'Team', 'LapStartTime', 'DriverNumber',
-                            'LapStartDate', 'TrackStatus', 'Position',
-                            'FastF1Generated', 'IsAccurate'])
+        return None
+    df = df[['Driver', 'LapNumber', 'LapTime']].copy()
     df['LapTime'] = format_time(df)
     return df
 
-print(df.columns)
 print(format_DataFrame(df))
