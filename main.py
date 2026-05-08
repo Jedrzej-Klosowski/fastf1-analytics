@@ -67,13 +67,14 @@ def plot_driver_comparasion(df: pd.DataFrame) -> None:
 
         ax.plot(driver_data['LapNumber'], 
                 driver_data['LapTimeInSeconds'], 
-                label=f"Kierowca {driver}",
+                label=f"Driver {driver}",
                 marker='o')
 
     ax.set_title('Lap time comparasion')
     ax.set_xlabel('Lap number')
     ax.set_ylabel('Lap time [in seconds]')
     ax.legend()
+    plt.savefig('LineChart.png')
     plt.show()
     
     
