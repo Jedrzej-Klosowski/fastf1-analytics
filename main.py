@@ -1,6 +1,7 @@
 import fastf1
 import pandas as pd
-import os
+import matplotlib.pyplot as plt
+import os, sys
 import logging
 
 cache_dir = './fastf1_cache'
@@ -27,7 +28,7 @@ df = session.laps[session.laps['Driver'].isin(drivers_abbrs)].copy()
 def format_DataFrame(df) -> pd.DataFrame:
     if df.empty:
         print("No data available for the specified drivers.")
-        return None
+        sys.exit(0)
     df = df[['Driver', 'LapNumber', 'LapTime', 'IsAccurate', 'LapTimeInSeconds']].copy()
     df['LapTime'] = format_time(df)
     return df
@@ -55,8 +56,28 @@ def add_LapTimeInSeconds(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df.loc[:, 'LapTimeInSeconds'] = total_seconds
     return df
+
+def plot_driver_comparasion(df: pd.DataFrame) -> None:
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    drivers = df['Driver'].unique()
+
+    for driver in drivers:
+        driver_data = df[df['Driver'] == driver]
+
+        ax.plot(driver_data['LapNumber'], 
+                driver_data['LapTimeInSeconds'], 
+                label=f"Kierowca {driver}",
+                marker='o')
+
+    ax.set_title('Lap time comparasion')
+    ax.set_xlabel('Lap number')
+    ax.set_ylabel('Lap time [in seconds]')
+    ax.legend()
+    plt.show()
     
     
 df= df[df['IsAccurate'] == True].pick_quicklaps()
 df = add_LapTimeInSeconds(df)
 print(format_DataFrame(df))
+plot_driver_comparasion(df)
