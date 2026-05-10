@@ -51,8 +51,7 @@ def format_time(df: pd.DataFrame) -> pd.Series:
 
 def add_LapTimeInSeconds(df: pd.DataFrame) -> pd.DataFrame:
     lap_time = pd.to_timedelta(df['LapTime'], errors='coerce')
-    components = lap_time.dt.components
-    total_seconds = components['minutes'] * 60 + components['seconds'] + (components['milliseconds'] / 1000)
+    total_seconds = lap_time.dt.total_seconds()
     df = df.copy()
     df.loc[:, 'LapTimeInSeconds'] = total_seconds
     return df
