@@ -1,29 +1,28 @@
+
 import fastf1
 import pandas as pd
 import matplotlib.pyplot as plt
 import os, sys
 import logging
 
-cache_dir = './fastf1_cache'
-if not os.path.exists(cache_dir):
-    os.makedirs(cache_dir)
+def setup_cache(cache_dir='./fastf1_cache'):
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
+    fastf1.Cache.enable_cache(cache_dir)
 
-fastf1.Cache.enable_cache(cache_dir)
+def get_session(year=2021, gp="Abu Dhabi", session_num=5):
+    session = fastf1.get_session(year, gp, session_num)
+    session.load()
+    return session
 
-#logging.disable(logging.WARNING)
-logging.disable(logging.CRITICAL)
-
-session = fastf1.get_session(2021, "Abu Dhabi", 5)
-session.load()
-
-drivers_abbrs = []
-while True:
-    abbr = input("Enter the abbreviations of F1 drivers' surnames [-1 to exit]: ").strip()
-    if abbr == "-1":
-        break
-    drivers_abbrs.append(abbr.upper())
-
-df = session.laps[session.laps['Driver'].isin(drivers_abbrs)].copy()
+def get_drivers_from_input():
+    drivers_abbrs = []
+    while True:
+        abbr = input("Enter the abbreviations of F1 drivers' surnames [-1 to exit]: ").strip()
+        if abbr == "-1":
+            break
+        drivers_abbrs.append(abbr.upper())
+    return drivers_abbrs
 
 def format_DataFrame(df) -> pd.DataFrame:
     if df.empty:
@@ -51,33 +50,39 @@ def format_time(df: pd.DataFrame) -> pd.Series:
 
 def add_LapTimeInSeconds(df: pd.DataFrame) -> pd.DataFrame:
     lap_time = pd.to_timedelta(df['LapTime'], errors='coerce')
-    total_seconds = lap_time.dt.total_seconds()
     df = df.copy()
-    df.loc[:, 'LapTimeInSeconds'] = total_seconds
+    df.loc[:, 'LapTimeInSeconds'] = lap_time.dt.total_seconds()
     return df
 
 def plot_driver_comparasion(df: pd.DataFrame) -> None:
-    
     fig, ax = plt.subplots(figsize=(10, 6))
     drivers = df['Driver'].unique()
-
     for driver in drivers:
         driver_data = df[df['Driver'] == driver]
-
         ax.plot(driver_data['LapNumber'], 
                 driver_data['LapTimeInSeconds'], 
                 label=f"Driver {driver}",
                 marker='o')
-
     ax.set_title('Lap time comparasion')
     ax.set_xlabel('Lap number')
     ax.set_ylabel('Lap time [in seconds]')
     ax.legend()
     plt.savefig('LineChart.png')
     plt.show()
-    
-    
-df= df[df['IsAccurate'] == True].pick_quicklaps()
-df = add_LapTimeInSeconds(df)
-print(format_DataFrame(df))
-plot_driver_comparasion(df)
+
+def main():
+    logging.disable(logging.CRITICAL)
+    setup_cache()
+    session = get_session(2021, "Abu Dhabi", 5)
+    drivers_abbrs = get_drivers_from_input()
+    df = session.laps[session.laps['Driver'].isin(drivers_abbrs)].copy()
+    if hasattr(df, 'pick_quicklaps'):
+        df = df[df['IsAccurate'] == True].pick_quicklaps()
+    else:
+        df = df[df['IsAccurate'] == True]
+    df = add_LapTimeInSeconds(df)
+    print(format_DataFrame(df))
+    plot_driver_comparasion(df)
+
+if __name__ == "__main__":
+    main()
